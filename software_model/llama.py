@@ -59,6 +59,11 @@ class LlamaConfig:
 
 # Public config from meta-llama/Meta-Llama-3-70B config.json
 LLAMA3_70B = LlamaConfig("Llama-3-70B", 8192, 64, 8, 28672, 80, 128256)
+# Public config from meta-llama/Llama-2-70b-hf config.json. Same layer shapes as
+# Llama-3-70B, smaller vocab. Used to validate against published Llama-2-70B benchmarks.
+LLAMA2_70B = LlamaConfig("Llama-2-70B", 8192, 64, 8, 28672, 80, 32000)
+# LLaMA-1 65B (MHA, d_ff 22016), used to compare against published A100 power-capping data.
+LLAMA1_65B = LlamaConfig("LLaMA-65B", 8192, 64, 64, 22016, 80, 32000)
 # Same model with MHA (n_kv_heads = n_heads) as a counterfactual baseline
 LLAMA3_70B_MHA = LlamaConfig("Llama-3-70B (MHA baseline)", 8192, 64, 64, 28672, 80, 128256)
 
