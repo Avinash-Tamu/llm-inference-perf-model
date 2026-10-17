@@ -18,7 +18,7 @@ WORKLOADS = {
     "wtw_65b": (LLAMA1_65B, "decode", 64, 384),
 }
 FREQS_FOR = {"prefill_2k": [0.60e9, 0.90e9, 1.20e9, 1.41e9]}
-CACHE = "myexp/results/dvfs_points.json"
+CACHE = "myexp/v0.2/results/dvfs_points.json"
 
 
 def load_cache():

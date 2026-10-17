@@ -24,7 +24,7 @@ The fit uses only the implied baseline power; the four published deltas are not 
 Choosing alpha among {0, 0.5, 1} does use them, so it is reported as a sensitivity and
 the selected alpha is labeled as such.
 
-Run after myexp/dvfs_sweep.py. Writes myexp/results/powercap_check.md and powercap_fit.json
+Run after myexp/v0.2/dvfs_sweep.py. Writes myexp/v0.2/results/powercap_check.md and powercap_fit.json
 """
 import json
 from energy_common import load_cache, params_for, curve
@@ -91,9 +91,9 @@ if __name__ == "__main__":
     best = min((k for k in err if k.startswith("C")), key=err.get)
     alpha = float(best[2:-1])
     out.append(f"Selected for the calibrated model: {best} (alpha chosen using the deltas, see note above).")
-    open("myexp/results/powercap_check.md", "w").write("\n".join(out) + "\n")
+    open("myexp/v0.2/results/powercap_check.md", "w").write("\n".join(out) + "\n")
     pc = params_for(cache, e_mempath_pj_per_byte=fits[alpha])
     json.dump({"alpha": alpha, "e_mempath_pj_per_byte": fits[alpha], "e_mac_pj": pc.e_mac_pj,
                "p_base_implied_w": P_BASE_IMPLIED, "mae_pp": err},
-              open("myexp/results/powercap_fit.json", "w"), indent=1)
+              open("myexp/v0.2/results/powercap_fit.json", "w"), indent=1)
     print("\n".join(out))

@@ -1,10 +1,10 @@
-"""Figures for v0.2 (energy + DVFS), calibrated model. Run after myexp/energy_report.py."""
+"""Figures for v0.2 (energy + DVFS), calibrated model. Run after myexp/v0.2/energy_report.py."""
 import csv
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-rows = [r for r in csv.DictReader(open("myexp/results/dvfs_energy.csv")) if r["model"] == "calibrated"]
+rows = [r for r in csv.DictReader(open("myexp/v0.2/results/dvfs_energy.csv")) if r["model"] == "calibrated"]
 for r in rows:
     for k, v in r.items():
         if k not in ("workload", "model"):
@@ -40,7 +40,7 @@ ax.set_title("Core DVFS on 4x A100: Llama-3-70B", color=INK, loc="left")
 ax.grid(color="#e6e5df", lw=0.6)
 ax.legend(frameon=False, loc="upper right")
 fig.tight_layout()
-fig.savefig("myexp/figures/dvfs_pareto.png", dpi=160)
+fig.savefig("myexp/v0.2/figures/dvfs_pareto.png", dpi=160)
 
 # 2) energy breakdown at nominal clock
 fig, ax = plt.subplots(figsize=(6.8, 3.4))
@@ -63,5 +63,5 @@ ax.xaxis.set_major_formatter(matplotlib.ticker.PercentFormatter(1.0))
 ax.set_title("Where the energy goes at 1.41 GHz (4x A100, all GPUs)", color=INK, loc="left")
 ax.legend(frameon=False, ncol=3, fontsize=8, loc="upper center", bbox_to_anchor=(0.45, -0.16))
 fig.tight_layout()
-fig.savefig("myexp/figures/energy_breakdown.png", dpi=160)
+fig.savefig("myexp/v0.2/figures/energy_breakdown.png", dpi=160)
 print("saved")

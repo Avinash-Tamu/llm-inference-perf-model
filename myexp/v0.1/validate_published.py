@@ -16,22 +16,22 @@ How each published metric is reproduced:
     Batch-64 prefill is simulated as one call when cheap; for 2048-token prompts it is
     simulated at batch 4 and scaled by 16 (compute-bound: matmul M is already 8192).
 
-Run from repo root:  python myexp/validate_published.py
-Writes myexp/results/validation.csv and myexp/results/validation.md
+Run from repo root:  python myexp/v0.1/validate_published.py
+Writes myexp/v0.1/results/validation.csv and myexp/v0.1/results/validation.md
 """
 import csv, json, os, sys, time
 from multiprocessing import Pool
 
 sys.path.insert(0, ".")
 os.makedirs("systolic_array_model/temp", exist_ok=True)
-os.makedirs("myexp/results", exist_ok=True)
+os.makedirs("myexp/v0.1/results", exist_ok=True)
 
 from design_space_exploration.dse import template_to_system, read_architecture_template
 from software_model.llama import LLAMA2_70B, LlamaDecoderLayerTP, LMHeadTP
 from software_model.utils import Tensor
 
 TP, CFG = 4, LLAMA2_70B
-CACHE = "myexp/results/validation_points.json"
+CACHE = "myexp/v0.1/results/validation_points.json"
 REF = "TensorRT-LLM v0.5.0, A100 FP16, Llama-2-70B, TP=4"
 
 # Published numbers (verbatim from the reference tables)
@@ -106,18 +106,18 @@ if __name__ == "__main__":
                      "published": pub, "simulated": round(sim), "error_pct": round(100 * (sim - pub) / pub, 1),
                      "prefill_share_pct": round(100 * prefill64[i] / total, 1)})
 
-    with open("myexp/results/validation.csv", "w", newline="") as f:
+    with open("myexp/v0.1/results/validation.csv", "w", newline="") as f:
         keys = ["metric", "unit", "published", "simulated", "error_pct", "prefill_share_pct"]
         w = csv.DictWriter(f, fieldnames=keys)
         w.writeheader()
         w.writerows(rows)
 
     mape = sum(abs(r["error_pct"]) for r in rows) / len(rows)
-    with open("myexp/results/validation.md", "w") as f:
+    with open("myexp/v0.1/results/validation.md", "w") as f:
         f.write(f"Reference: {REF}\n\n| Metric | Published | Simulated | Error |\n|---|---:|---:|---:|\n")
         for r in rows:
             f.write(f"| {r['metric']} ({r['unit']}) | {r['published']:,} | {r['simulated']:,} | {r['error_pct']:+.1f}% |\n")
         f.write(f"\nMean absolute error: {mape:.1f}%\n")
         f.write(f"\nBatch-1 decode step at 2K context (no published A100 TPOT to compare): "
                 f"{cache['decode,1,2048']*1e3:.1f} ms\n")
-    print(open("myexp/results/validation.md").read())
+    print(open("myexp/v0.1/results/validation.md").read())

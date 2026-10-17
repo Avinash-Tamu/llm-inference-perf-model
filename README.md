@@ -40,11 +40,11 @@ Setup: Llama-3-70B, FP16, tensor parallel = 4 on 4× A100-80GB (LLMCompass `GA10
    kernel-launch overhead are about 30% of layer time. Largely because of them, simulated decode latency at 4K
    context is 20–30% above the pure roofline.
 
-![Roofline](myexp/figures/roofline.png)
-![Decode throughput](myexp/figures/decode_throughput.png)
-![Decode breakdown](myexp/figures/decode_breakdown.png)
+![Roofline](myexp/v0.1/figures/roofline.png)
+![Decode throughput](myexp/v0.1/figures/decode_throughput.png)
+![Decode breakdown](myexp/v0.1/figures/decode_breakdown.png)
 
-Raw numbers: [`myexp/results/`](myexp/results/) (`decode_sweep.csv`, `prefill_sweep.csv`, `op_stats.csv`).
+Raw numbers: [`myexp/v0.1/results/`](myexp/v0.1/results/) (`decode_sweep.csv`, `prefill_sweep.csv`, `op_stats.csv`).
 
 ## Validation against published hardware measurements
 
@@ -80,7 +80,7 @@ request time, prefill included. Nothing was tuned to these numbers.
   (simulated 48 ms at 2K context) is **not** validated. LLMCompass's fixed per-kernel overhead
   (≈27 ms per decode step, calibrated on eager PyTorch) probably overstates it for CUDA-graph runtimes.
 
-Script: [`myexp/validate_published.py`](myexp/validate_published.py). Results: `myexp/results/validation.{md,csv}`.
+Script: [`myexp/v0.1/validate_published.py`](myexp/v0.1/validate_published.py). Results: `myexp/v0.1/results/validation.{md,csv}`.
 
 ## v0.2: Energy per token under core DVFS
 
@@ -144,7 +144,7 @@ A100s are listed at 300 W TDP (PCIe-class boards), while this model is calibrate
 It's the same GA100 die and 1.41 GHz boost, and the comparison uses relative changes, but absolute
 watts shouldn't be read across. Their software (eager PyTorch) is also slower per token than modern
 serving stacks.
-Full table: `myexp/results/powercap_check.md`.
+Full table: [`myexp/v0.2/results/powercap_check.md`](myexp/v0.2/results/powercap_check.md).
 
 ### Findings (calibrated model, Llama-3-70B, 4× A100, energy summed over all four GPUs)
 
@@ -165,39 +165,52 @@ Full table: `myexp/results/powercap_check.md`.
    energy at +5% latency, essentially free. Measured data says the real trade is a lot less generous.
    That's why the check matters.
 
-![DVFS Pareto](myexp/figures/dvfs_pareto.png)
-![Energy breakdown](myexp/figures/energy_breakdown.png)
+![DVFS Pareto](myexp/v0.2/figures/dvfs_pareto.png)
+![Energy breakdown](myexp/v0.2/figures/energy_breakdown.png)
 
 Limitations specific to v0.2: the V–f curve and several power terms are assumptions (results move
 with them, and the README doesn't claim otherwise). HBM and NVLink clocks are held fixed. There's no
 thermal model and no clock-switching latency. Power-cap emulation assumes the cap maps to a single
 steady clock. Energy is GPU-only: no CPU, network or cooling.
 
-## What I added
+## Repository layout
+
+Everything I added is split by version. Each folder has its own README, scripts, `results/` and `figures/`.
+
+```
+software_model/llama.py          Llama decoder layer (GQA, SwiGLU, RMSNorm, TP), used by both versions
+hardware_model/energy_model.py   v0.2 energy + DVFS model (library code)
+myexp/
+  NOTES.md, smoke_test.py        setup notes and a quick simulator sanity check
+  v0.1/                          Llama-3-70B GQA study + validation against published A100 numbers
+    sweep_llama.py, plot_llama.py, validate_llama.py, validate_published.py
+    results/   figures/
+  v0.2/                          energy per token under core DVFS
+    dvfs_sweep.py, energy_common.py, compare_powercap.py, energy_report.py, plot_energy.py
+    results/   figures/
+```
 
 | File | What it is |
 |---|---|
-| [`software_model/llama.py`](software_model/llama.py) | `LlamaDecoderLayerTP`: GQA attention modeled as a batched matmul `[b·n_kv, g·s, d_h] × [b·n_kv, d_h, s_kv]`, so the query group becomes the matmul M dimension; SwiGLU FFN; RMSNorm; TP all-reduces; per-op FLOP/byte accounting. `LMHeadTP` for the vocab projection. `LlamaConfig` with public Llama-3-70B parameters and an MHA counterfactual. |
-| [`myexp/validate_llama.py`](myexp/validate_llama.py) | Hand-calculation checks: 70.55 B parameters, 320 KB KV cache per token (2·80·8·128·2 B), 34.2 GB weights per GPU at TP=4, attention arithmetic intensity ≈ 8. |
-| [`myexp/sweep_llama.py`](myexp/sweep_llama.py) | Decode sweep (batch 1–256 × context 4K/32K × GQA/MHA) and prefill sweep (512–8K), with HBM capacity check. |
-| [`myexp/plot_llama.py`](myexp/plot_llama.py) | The three v0.1 figures. |
-| [`myexp/validate_published.py`](myexp/validate_published.py) | v0.1 validation against TensorRT-LLM's published A100 Llama-70B numbers. Adds `LLAMA2_70B` config. |
-| [`hardware_model/energy_model.py`](hardware_model/energy_model.py) | v0.2 energy model: per-component energies, V–f curve, static/clock/leakage power, analytic event counts per Llama layer, MAC-energy calibration. |
-| [`myexp/dvfs_sweep.py`](myexp/dvfs_sweep.py) | Reruns LLMCompass at 0.6–1.41 GHz for four workloads, plus the calibration GEMM. |
-| [`myexp/compare_powercap.py`](myexp/compare_powercap.py) | Checks the energy model against published A100 power-capping data; fits e_path; scenario table. |
-| [`myexp/energy_report.py`](myexp/energy_report.py), [`myexp/plot_v02.py`](myexp/plot_v02.py) | v0.2 results table (`dvfs_energy.csv`) and figures. |
+| [`software_model/llama.py`](software_model/llama.py) | `LlamaDecoderLayerTP`: GQA attention modeled as a batched matmul `[b·n_kv, g·s, d_h] × [b·n_kv, d_h, s_kv]`, so the query group becomes the matmul M dimension; SwiGLU FFN; RMSNorm; TP all-reduces; per-op FLOP/byte accounting. `LMHeadTP`. Configs: Llama-3-70B, an MHA counterfactual, Llama-2-70B (validation), LLaMA-65B (power-cap check). |
+| [`myexp/v0.1/`](myexp/v0.1/) | Hand-calculation checks, decode/prefill sweeps, the three v0.1 figures, and the validation against TensorRT-LLM's published A100 numbers. |
+| [`hardware_model/energy_model.py`](hardware_model/energy_model.py) | Per-component energies, V–f curve, static/clock/leakage power, analytic event counts per Llama layer, MAC-energy calibration. |
+| [`myexp/v0.2/`](myexp/v0.2/) | Clock sweeps, the check against published A100 power-capping data, the results table and the two v0.2 figures. |
 
 ## Reproduce
 
 ```bash
+# run everything from the repo root
 conda create -n llmcompass python=3.11 -y && conda activate llmcompass
 pip install torch "scalesim==2.0.2" scipy matplotlib seaborn pandas numpy
-python myexp/validate_llama.py      # seconds
-python myexp/sweep_llama.py         # ~1 h on 2 cores the first run (cached afterwards)
-python myexp/plot_llama.py
-python myexp/validate_published.py  # ~1.5 h on 2 cores (cached per point)
-python myexp/dvfs_sweep.py          # ~2-3 h on 2 cores (cached per point)
-python myexp/compare_powercap.py && python myexp/energy_report.py && python myexp/plot_v02.py
+# v0.1
+python myexp/v0.1/validate_llama.py      # seconds
+python myexp/v0.1/sweep_llama.py         # ~1 h on 2 cores the first run (cached afterwards)
+python myexp/v0.1/plot_llama.py
+python myexp/v0.1/validate_published.py  # ~1.5 h on 2 cores (cached per point)
+# v0.2
+python myexp/v0.2/dvfs_sweep.py          # ~2-3 h on 2 cores (cached per point)
+python myexp/v0.2/compare_powercap.py && python myexp/v0.2/energy_report.py && python myexp/v0.2/plot_energy.py
 ```
 PyTorch is only used by LLMCompass's real-GPU benchmarking paths. Simulation runs without a GPU.
 `scalesim` must be 2.0.x. Version 3.0 changed its config format and breaks LLMCompass.

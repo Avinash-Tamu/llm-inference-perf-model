@@ -2,7 +2,7 @@
 v0.2 simulation runs: Llama layers on 4x A100-80GB (TP=4) at several core clocks.
 
 LLMCompass is re-run with the device clock set to f, so compute cycles stretch while
-HBM transfer time does not. Results are cached per point in myexp/results/dvfs_points.json;
+HBM transfer time does not. Results are cached per point in myexp/v0.2/results/dvfs_points.json;
 energy is computed afterwards from these latencies (see energy_report.py).
 
 Workloads (defined in energy_common.py)
@@ -13,16 +13,15 @@ Workloads (defined in energy_common.py)
                power-capping measurements in compare_powercap.py)
 Also simulates one 8192^3 FP16 GEMM at 1.41 GHz, used to calibrate MAC energy.
 
-Run from repo root:  python myexp/dvfs_sweep.py      (~2-3 h on 2 cores, first run)
-Then:                python myexp/compare_powercap.py && python myexp/energy_report.py
+Run from repo root:  python myexp/v0.2/dvfs_sweep.py      (~2-3 h on 2 cores, first run)
+Then:                python myexp/v0.2/compare_powercap.py && python myexp/v0.2/energy_report.py
 """
 import copy, json, os, sys, time
 from multiprocessing import Pool
 
 sys.path.insert(0, ".")
-sys.path.insert(0, "myexp")
 os.makedirs("systolic_array_model/temp", exist_ok=True)
-os.makedirs("myexp/results", exist_ok=True)
+os.makedirs("myexp/v0.2/results", exist_ok=True)
 
 from design_space_exploration.dse import template_to_system, read_architecture_template
 from software_model.llama import LlamaDecoderLayerTP, LMHeadTP

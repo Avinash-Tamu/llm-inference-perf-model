@@ -1,11 +1,11 @@
-"""Plots for the Llama-3-70B study. Run after sweep_llama.py:  python myexp/plot_llama.py"""
+"""Plots for the Llama-3-70B study. Run after sweep_llama.py:  python myexp/v0.1/plot_llama.py"""
 import csv, os
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-R = "myexp/results"
-F = "myexp/figures"
+R = "myexp/v0.1/results"
+F = "myexp/v0.1/figures"
 os.makedirs(F, exist_ok=True)
 
 # palette (validated reference categorical slots 1-3) + neutral ink

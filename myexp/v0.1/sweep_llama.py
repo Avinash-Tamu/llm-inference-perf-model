@@ -1,12 +1,12 @@
 """
 Sweeps for Llama-3-70B on 4x A100-80GB (tensor parallel = 4), GQA vs. MHA baseline.
 
-Outputs (myexp/results/):
+Outputs (myexp/v0.1/results/):
   decode_sweep.csv   simulated + roofline per-token decode latency over batch x context
   prefill_sweep.csv  simulated prefill latency over prompt length
   op_stats.csv       per-operator FLOPs / bytes / latency for roofline plots
 
-Run from repo root:  python myexp/sweep_llama.py [--quick]
+Run from repo root:  python myexp/v0.1/sweep_llama.py [--quick]
 Full run takes ~1 hour on 2 cores the first time (scalesim results are cached in
 systolic_array_model/look_up_table_16_16.csv, so reruns are much faster).
 """
@@ -15,7 +15,7 @@ from multiprocessing import Pool
 
 sys.path.insert(0, ".")
 os.makedirs("systolic_array_model/temp", exist_ok=True)
-os.makedirs("myexp/results", exist_ok=True)
+os.makedirs("myexp/v0.1/results", exist_ok=True)
 
 from design_space_exploration.dse import template_to_system, read_architecture_template
 from software_model.llama import LLAMA3_70B, LLAMA3_70B_MHA, LlamaDecoderLayerTP, LMHeadTP
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     with Pool(2) as pool:
         pre = pool.map(prefill_point, prefill_jobs, chunksize=1)
         dec = pool.map(decode_point, decode_jobs, chunksize=1)
-    write("myexp/results/decode_sweep.csv", [r for r, _ in dec])
-    write("myexp/results/prefill_sweep.csv", [r for r, _ in pre])
-    write("myexp/results/op_stats.csv", [o for _, ops in pre + dec for o in ops])
+    write("myexp/v0.1/results/decode_sweep.csv", [r for r, _ in dec])
+    write("myexp/v0.1/results/prefill_sweep.csv", [r for r, _ in pre])
+    write("myexp/v0.1/results/op_stats.csv", [o for _, ops in pre + dec for o in ops])
     print("done")
